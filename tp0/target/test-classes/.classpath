@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="tp0/src/main/java"/>
+	<classpathentry kind="src" path="tp0/src/test/java"/>
+	<classpathentry excluding="tp0/src/main/java/|tp0/src/test/java/" kind="src" path=""/>
+	<classpathentry kind="lib" path="tp0/target/tp0-1.0-SNAPSHOT.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="output" path="tp0/target/test-classes"/>
+</classpath>
