@@ -20,7 +20,7 @@ python3 mi-generador.py $1 $2
 ```
 #### Resolución:
 
-Se creo un script que llama a un código python que genera efectivamente el docker-compose.
+Se creo un script llamado "generar-compose-sh" el cual llama a un script en python llamado "mi-generador.py" que genera efectivamente el docker-compose con la cantidad de clientes solicitada.
 
 #### Ejecución:
 ```
