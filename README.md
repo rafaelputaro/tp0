@@ -52,8 +52,33 @@ make docker-compose-down
 
 ***
 
+### Ejercicio N°3:
+Crear un script de bash `validar-echo-server.sh` que permita verificar el correcto funcionamiento del servidor utilizando el comando `netcat` para interactuar con el mismo. Dado que el servidor es un echo server, se debe enviar un mensaje al servidor y esperar recibir el mismo mensaje enviado.
+
+En caso de que la validación sea exitosa imprimir: `action: test_echo_server | result: success`, de lo contrario imprimir:`action: test_echo_server | result: fail`.
+
+El script deberá ubicarse en la raíz del proyecto. Netcat no debe ser instalado en la máquina _host_ y no se pueden exponer puertos del servidor para realizar la comunicación (hint: `docker network`). `
+
+#### Resolución:
+
+Creo el archivo "docker-compose-validar-dev.yaml" el cual levanta un cliente netcat en la misma red que server, asumiendo que el contenedor de "server" ya esta corriendo. Este contenedor, "netcat-cli", corre un script llamado "do-validate-echo-server" cuyo log es parseado por el script "validar-echo-server.sh" el cual imprime el resultado de el mensaje al servidor.
+
+#### Ejecución:
+
+```
+. generar-compose.sh docker-compose-dev.yaml 0
+make docker-compose-up
+. validar-echo-server.sh
+make docker-compose-logs
+make docker-compose-down
+```
+
+***
+
+
 #### Test:
 
 ```
 REPO_PATH=/home/putaro/Workspace/tp0 pytest -s
 ```
+***

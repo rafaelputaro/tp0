@@ -1,0 +1,18 @@
+name: tp0
+services:
+  netcat-cli:
+    container_name: netcat-cli
+    image: alpine:latest
+    entrypoint: ["/bin/sh", "./do-validate-echo-server.sh"]
+    environment:
+      - CLI_LOG_LEVEL=DEBUG
+    networks:
+      - testing_net
+    volumes:
+      - ./do-validate-echo-server.sh:/do-validate-echo-server.sh:ro
+networks:
+  testing_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.125.0/24
