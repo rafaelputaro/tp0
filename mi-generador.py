@@ -1,7 +1,7 @@
 import sys
 
 ERROR_MESSAGE = "No se han ingresado los argumentos correctos: <archivo de salida> <cantidad clientes>"
-HEADER = "name: tp0\nservices:\n  server:\n    container_name: server\n    image: server:latest\n    entrypoint: python3 /main.py\n    environment:\n      - PYTHONUNBUFFERED=1\n      - LOGGING_LEVEL=DEBUG\n    networks:\n      - testing_net\n"
+HEADER = "name: tp0\nservices:\n  server:\n    container_name: server\n    image: server:latest\n    entrypoint: python3 /main.py\n    environment:\n      - PYTHONUNBUFFERED=1\n    networks:\n      - testing_net\n    volumes:\n      - ./server/config.ini:/config.ini:ro\n"
 FOOTER = "networks:\n  testing_net:\n    ipam:\n      driver: default\n      config:\n        - subnet: 172.25.125.0/24\n"
 
 def do_generate_compose_file(args):
@@ -13,7 +13,7 @@ def do_generate_compose_file(args):
     file.close()
 
 def generate_client_code(client_id):
-    return f'  client{client_id}:\n    container_name: client{client_id}\n    image: client:latest\n    entrypoint: /client\n    environment:\n      - CLI_ID={client_id}\n      - CLI_LOG_LEVEL=DEBUG\n    networks:\n      - testing_net\n    depends_on:\n      - server\n'
+    return f'  client{client_id}:\n    container_name: client{client_id}\n    image: client:latest\n    entrypoint: /client\n    environment:\n      - CLI_ID={client_id}\n    networks:\n      - testing_net\n    volumes:\n      - ./client/config.yaml:/config.yaml:ro\n    depends_on:\n      - server\n'
 
 def generate_compose_file():
     args = parse_args()
