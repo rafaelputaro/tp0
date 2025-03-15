@@ -2,6 +2,7 @@ import socket
 import logging
 import sys
 import signal
+from common.protocol import Protocol
 
 SIGNAL_HANDLER_ACTION="received_a_signal"
 CLOSE_SERVER_SOCKET_ACTION="closing_server_socket"
@@ -57,12 +58,12 @@ class Server:
         client socket will also be closed
         """
         try:
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
-            addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
+            bet = Protocol.apply_rcv_protocol(client_sock)
+            Protocol.apply_res_protocol(client_sock, bet)
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
+        except TypeError as e:
+            logging.error("action: parse_message | result: fail | error: {e}")
         finally:
             client_sock.close()
             self._clients_sockets.remove(client_sock)
