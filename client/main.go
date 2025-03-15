@@ -122,6 +122,11 @@ func main() {
 		ID:            v.GetString("id"),
 		LoopAmount:    v.GetInt("loop.amount"),
 		LoopPeriod:    v.GetDuration("loop.period"),
+		Nombre:        v.GetString("NOMBRE"),
+		Apellido:      v.GetString("APELLIDO"),
+		Documento:     v.GetString("DOCUMENTO"),
+		Nacimiento:    v.GetString("NACIMIENTO"),
+		Numero:        v.GetString("NUMERO"),
 	}
 
 	// New client
