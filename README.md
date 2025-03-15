@@ -75,6 +75,25 @@ make docker-compose-down
 
 ***
 
+### Ejercicio N°4:
+Modificar servidor y cliente para que ambos sistemas terminen de forma _graceful_ al recibir la signal SIGTERM. Terminar la aplicación de forma _graceful_ implica que todos los _file descriptors_ (entre los que se encuentran archivos, sockets, threads y procesos) deben cerrarse correctamente antes que el thread de la aplicación principal muera. Loguear mensajes en el cierre de cada recurso (hint: Verificar que hace el flag `-t` utilizado en el comando `docker compose down`).
+
+#### Resolución:
+
+En el cliente se crea un canal en el "main" al cual se notifican las señales las cuales son tomadas del canal en el loop principal de cliente en "client.go" para finalizar dicho loop correctamente.
+En el servidor se crea una función que introduce un callback para el manejo de señales llamado "__handle_a_signal" el cual efectúa el log del evento cierra los socket's de cada uno de los clientes para luego finalizar el proceso servidor.
+
+#### Ejecución:
+
+```
+. generar-compose.sh docker-compose-dev.yaml 1
+make docker-compose-up
+make docker-compose-logs
+make docker-compose-down
+```
+NOTA: Para verificar que el cierre del cliente funciona correctamente subir el loop.amount en el archivo de configuración del mismo retornando un "code 0" en el log.
+
+***
 
 #### Test:
 

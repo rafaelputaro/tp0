@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"github.com/op/go-logging"
 )
+
+const SIGNAL_ACTION = "received_a_sigterm"
 
 var log = logging.MustGetLogger("log")
 
@@ -51,9 +54,10 @@ func (c *Client) createClientSocket() error {
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
-func (c *Client) StartClientLoop() {
+func (c *Client) StartClientLoop(singalChannel chan os.Signal) {
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
+loop:
 	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
@@ -81,8 +85,17 @@ func (c *Client) StartClientLoop() {
 			msg,
 		)
 
+		select {
+		// Receive a signal from channel
+		case <-singalChannel:
+			log.Infof("action: %v | result: success | client_id: %v",
+				SIGNAL_ACTION,
+				c.config.ID,
+			)
+			break loop
 		// Wait a time between sending one message and the next one
-		time.Sleep(c.config.LoopPeriod)
+		case <-time.After(c.config.LoopPeriod):
+		}
 
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
