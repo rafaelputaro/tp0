@@ -63,7 +63,7 @@ class Server:
             (_, _, agency_id) = Protocol.apply_rcv_protocol(client_sock)
             bets_counter = 0
             amount_bets_expected = None
-            logging.debug(f'action: read_agency_id | agency_id: {agency_id}')
+            logging.debug(f'action: read_agency_id | result: success | agency_id: {agency_id}')
             # Read bet loop
             while (amount_bets_expected == None):
                 try:
