@@ -10,7 +10,8 @@ const MSG_CANT_OPEN_FILE = "Can't open file"
 const MSG_ERROR_ON_PARSE = "Can't parse bet readed"
 const ACTION_OPEN_FILE = "open_file"
 const ACTION_CLOSE_FILE = "close_file"
-const ACTION_READ_BEAT = "read_bet"
+
+// const ACTION_READ_BEAT = "read_bet"
 const ACTION_PARSE_BET_FROM_CSV = "parse_bet_from_csv"
 const AMOUNT_FIELDS = 5
 
@@ -65,7 +66,7 @@ func (betsLoader *BetsLoader) Next() (*Bet, error) {
 	if err != nil {
 		betsLoader.eof = true
 		betsLoader.lastReaded = nil
-		log.Debugf("action: %s %s | result: fail", ACTION_READ_BEAT, betsLoader.filePath)
+		//	log.Debugf("action: %s %s | result: fail", ACTION_READ_BEAT, betsLoader.filePath)
 		return nil, err
 	}
 	betsLoader.lastReaded, err = parseBetFromFields(line)
