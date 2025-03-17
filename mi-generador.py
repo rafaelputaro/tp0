@@ -16,7 +16,7 @@ def do_generate_compose_file(args):
     file.close()
 
 def generate_client_code(client_id):
-    return f'  client{client_id}:\n    container_name: client{client_id}\n    image: client:latest\n    entrypoint: /client\n{generate_client_environment(client_id)}    networks:\n      - testing_net\n    volumes:\n      - ./client/config.yaml:/config.yaml:ro\n    depends_on:\n      - server\n'
+    return f'  client{client_id}:\n    container_name: client{client_id}\n    image: client:latest\n    entrypoint: /client\n{generate_client_environment(client_id)}    networks:\n      - testing_net\n    volumes:\n      - ./client/config.yaml:/config.yaml:ro\n      - ./.data/agency-{client_id}.csv:/agency-{client_id}.csv:ro\n    depends_on:\n      - server\n'
 
 def generate_client_environment(client_id):
     return f'    environment:\n      - CLI_ID={client_id}\n      - CLI_LOG_LEVEL=DEBUG\n      - CLI_DATA=agency-{client_id}.csv\n'
