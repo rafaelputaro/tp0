@@ -5,6 +5,8 @@ from common.utils import Bet, store_bets
 
 class Protocol(ABC):
 
+    ACTION_PARSE_BET = "parse_bet"
+
     ACTION_RECEIVE = "receive_message"
 
     ACTION_RESPONSE = "apuesta_recibida"

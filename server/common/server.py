@@ -73,7 +73,7 @@ class Server:
                 except ValueError as e:
                     logging.info(f'action: {READ_BET_ACTION} | result: fail | cantidad: {e}')
                 except TypeError as e:
-                    logging.debug(f'action: store_bets | msg: no more bets')
+                    logging.debug(f'action: stop_rcv_and_store_bets | result: success | msg: no more bets')
                     break
             # Response with amount bets
             Protocol.apply_res_protocol(client_sock, str(bets_counter), amount_bets_expected)            
