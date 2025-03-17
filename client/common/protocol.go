@@ -11,10 +11,12 @@ import (
 
 const ACTION_SEND_BET = "apuesta_enviada"
 const ACTION_RCV_AMOUNT_BETS = "recibir_cantidad_apuestas"
+const ACTION_ASK_WINNERS = "consulta_ganadores"
 
 // const ACTION_MAX_BATCH_AMOUNT_REACHED = "Maximum batch length reached"
 const ERROR_SEND_BET = "error al enviar apuesta"
 const ERROR_RCV_AMOUNT_BETS = "error al recibir cantidad de apuestas"
+const ERROR_RCV_WINNERS = "error al recibir ganadores"
 
 // Bet Entity that encapsulates how
 type Protocol struct {
@@ -52,12 +54,6 @@ func (protocol *Protocol) ApplySendBetProtocol(clientId string, conn net.Conn, b
 			protocol.appendBet(parsed, parsedLenProtUpdated)
 			return nil
 		} else {
-			/*
-				log.Debugf("action: %v | amount_bets_batch: %v | amount_bets_sended: %v",
-					ACTION_MAX_BATCH_AMOUNT_REACHED,
-					protocol.amountBetsBatch,
-					protocol.amountBetsSended,
-				)*/
 			err := protocol.trySendBets(clientId, conn)
 			if err == nil {
 				protocol.appendBet(parsed, parsedLen)
@@ -72,9 +68,9 @@ func (protocol *Protocol) trySendBets(clientId string, conn net.Conn) error {
 	parsedLen := protocol.parsedLen
 	errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
 	_, errorSendContent := io.WriteString(conn, parsed)
-	checkError := _checkErrorSend(clientId, errorSendLen, errorSendContent)
+	checkError := checkErrorSend(clientId, errorSendLen, errorSendContent)
 	if checkError == nil {
-		// clean buffer and uptad amount bets sended
+		// clean buffer and update amount bets sended
 		protocol.amountBetsSended += len(protocol.betsParsed)
 		protocol.amountBetsBatch = 0
 		protocol.betsParsed = protocol.betsParsed[:0]
@@ -111,7 +107,7 @@ func (protocol *Protocol) ApplySendAgencyIdProtocol(clientId string, conn net.Co
 	} else {
 		errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
 		_, errorSendContent := io.WriteString(conn, parsed)
-		return _checkErrorSend(clientId, errorSendLen, errorSendContent)
+		return checkErrorSend(clientId, errorSendLen, errorSendContent)
 	}
 }
 
@@ -127,18 +123,32 @@ func (protocol *Protocol) ApplySendAmountBetsProtocol(clientId string, conn net.
 	} else {
 		errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
 		_, errorSendContent := io.WriteString(conn, parsed)
-		return _checkErrorSend(clientId, errorSendLen, errorSendContent)
+		return checkErrorSend(clientId, errorSendLen, errorSendContent)
 	}
 }
 
-// Send amount bets to server and wait for ack
+// Receive amount bets from server
 func (protocol *Protocol) ApplyRecvAmountBetsProtocol(clientId string, conn net.Conn, amountBetseExpected int) error {
 	readed, errorRcv := bufio.NewReader(conn).ReadString('\n')
-	return _checkRcvAmountBets(clientId, strings.TrimSuffix(readed, "\n"), strconv.Itoa(amountBetseExpected), errorRcv)
+	return checkRcvAmountBets(clientId, strings.TrimSuffix(readed, "\n"), strconv.Itoa(amountBetseExpected), errorRcv)
+}
+
+// Send amount bets to server and wait for ack
+func (protocol *Protocol) ApplyRequestWinnersProtocol(clientId string, conn net.Conn) error {
+	parsedLen, parsed := ParseRequestWinners()
+	errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
+	_, errorSendContent := io.WriteString(conn, parsed)
+	return checkErrorSend(clientId, errorSendLen, errorSendContent)
+}
+
+// Receive winners from server. Returns if receive winners
+func (protocol *Protocol) ApplyRecvWinnersProtocol(clientId string, conn net.Conn) (error, bool) {
+	readed, errorRcv := bufio.NewReader(conn).ReadString('\n')
+	return checkRcvWinners(clientId, strings.TrimSuffix(readed, "\n"), errorRcv)
 }
 
 // Returns false if an error occurs (log errors), true otherwise
-func _checkErrorSend(clientId string, errSendLen error, errSendContent error) error {
+func checkErrorSend(clientId string, errSendLen error, errSendContent error) error {
 	checkErrSendLen := errSendLen != nil
 	checkErrSendContent := errSendContent != nil
 	if checkErrSendLen || checkErrSendContent {
@@ -163,7 +173,7 @@ func _checkErrorSend(clientId string, errSendLen error, errSendContent error) er
 }
 
 // Returns false if an error occurs (log errors), true otherwise
-func _checkRcvAmountBets(clientId string, amountBetsReaded string, amountBetseExpected string, errRcv error) error {
+func checkRcvAmountBets(clientId string, amountBetsReaded string, amountBetseExpected string, errRcv error) error {
 	if errRcv != nil {
 		log.Debugf("action: %v | result: fail | client_id: %v | error_rcv: %v",
 			ACTION_RCV_AMOUNT_BETS,
@@ -176,7 +186,6 @@ func _checkRcvAmountBets(clientId string, amountBetsReaded string, amountBetseEx
 			ERROR_RCV_AMOUNT_BETS,
 		)
 	} else {
-
 		var check_success string
 		if amountBetsReaded == amountBetseExpected {
 			check_success = "success"
@@ -190,5 +199,31 @@ func _checkRcvAmountBets(clientId string, amountBetsReaded string, amountBetseEx
 		)
 	}
 	return errRcv
+}
 
+// Returns false if an error occurs (log errors) or not have a winner, true otherwise
+func checkRcvWinners(clientId string, readed string, errRcv error) (error, bool) {
+	if errRcv != nil {
+		log.Debugf("action: %v | result: fail | client_id: %v | error_rcv: %v",
+			ACTION_ASK_WINNERS,
+			clientId,
+			errRcv,
+		)
+		log.Errorf("action: %v | result: fail | client_id: %v | error: %v",
+			ACTION_ASK_WINNERS,
+			clientId,
+			ERROR_RCV_WINNERS,
+		)
+	} else {
+		haveWinners, winners := ParseWinnersMessage(readed)
+		if haveWinners {
+			log.Infof("action: %v | result: success | cant_ganadores: %v",
+				ACTION_ASK_WINNERS,
+				len(winners),
+			)
+			return nil, true
+		}
+		return nil, false
+	}
+	return errRcv, false
 }

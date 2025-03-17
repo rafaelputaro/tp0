@@ -2,31 +2,38 @@ import logging
 from abc import ABC
 import socket
 from common.utils import Bet, store_bets
+from common.lottery import Lottery
 
 class Protocol(ABC):
 
     ACTION_PARSE_BET = "parse_bet"
 
-    ACTION_RECEIVE = "receive_message"
+    ACTION_RECEIVE = "apuesta_recibida"
 
-    ACTION_RESPONSE = "apuesta_recibida"
+    ACTION_RESPONSE = "enviar_número_de_apuestas"
 
     ACTION_STORE_BET = "apuesta_almacenada"
 
-    CODIFICATION = 'utf-8'
-
-    BYTE_ORDER = 'big'
-
     AMOUNT_BYTES_LENGTH_MESSAGE = 2
-
-    MSG_ERROR_ON_PARSE_BET = "Error on parse bet"
 
     BETS_DELIMITER = ';'    
 
+    BYTE_ORDER = 'big'
+
+    CODIFICATION = 'utf-8'
+
     FIELDS_DELIMTER = ','
 
+    KEEP_WAITING_WINNERS_TAG = "KEEP WAITING WINNERS"
+
+    MSG_ERROR_ON_PARSE_BET = "Error on parse bet"
+
+    WINNERS_DELIMITER = ';'    
+
+    WINNERS_REQUEST_TAG = "WINNERS"    
+
     @classmethod
-    def apply_rcv_protocol(cls, client_sock: socket, agency = ""):
+    def apply_rcv_bets_protocol(cls, client_sock: socket, agency = ""):
         """ Receive a bet from the client
             Returns:
             1) Bets, None, None  -> Keep reading
@@ -66,8 +73,7 @@ class Protocol(ABC):
     def parse_bet(cls, betData: list[str], agency = ""):
         try:               
             return Bet(agency, betData[0], betData[1], betData[2], betData[3], betData[4])
-        except Exception as e:
-            #logging.debug(f'data: {len(betData)} | agency: {agency}')
+        except Exception as _:
             raise ValueError(f'{Protocol.MSG_ERROR_ON_PARSE_BET}')
 
     @classmethod
@@ -86,7 +92,7 @@ class Protocol(ABC):
         """ Support the bet locally
         """        
         store_bets([bet])
-        logging.debug(f'action: {Protocol.ACTION_STORE_BET} | result: success | dni: {bet.document} | numero: {bet.number}')
+        #logging.debug(f'action: {Protocol.ACTION_STORE_BET} | result: success | dni: {bet.document} | numero: {bet.number}')
 
     @classmethod
     def apply_store_bets(cls, bets: list[Bet]):
@@ -96,10 +102,32 @@ class Protocol(ABC):
             Protocol.apply_store_bet(bet)
 
     @classmethod
-    def apply_res_protocol(cls, client_sock: socket, amount_bets: str, amount_bets_expected: str):
+    def apply_res_amount_bets_protocol(cls, client_sock: socket, amount_bets: str, amount_bets_expected: str):
         """ Send a confirmation message to the client if receive the amount bets expected
         """      
         client_sock.send("{}\n".format(amount_bets).encode('utf-8'))
-        logging.debug(f'Leídos: {amount_bets} | Esperado: {amount_bets_expected}')
-        result = "success" if (amount_bets == amount_bets_expected) else "failure"
+        result: str = "success" if (amount_bets == amount_bets_expected) else "failure"
         logging.info(f'action: {Protocol.ACTION_RESPONSE} | result: {result} | cantidad: {amount_bets}')
+
+    @classmethod
+    def apply_winners_protocol(cls, client_sock: socket, agency: str, lottery: Lottery):
+        """ Receive a request winner's from the client and response and answer that query.
+            Returns:
+            True if it has been possible to answer with the winners, false otherwise and send WAIT to
+            the cliente.
+        """        
+        length: int = int.from_bytes(client_sock.recv(Protocol.AMOUNT_BYTES_LENGTH_MESSAGE), byteorder=Protocol.BYTE_ORDER)
+        msg: str = client_sock.recv(length).decode(Protocol.CODIFICATION).strip()
+        toReturn: bool = False
+        if msg.find(Protocol.WINNERS_REQUEST_TAG) >= 0:
+            winners: list[Bet] = lottery.get_winners_from_agency(agency)
+            toResponse: str = Protocol.KEEP_WAITING_WINNERS_TAG
+            if winners != None:
+                toResponse = Protocol._parse_winners(winners)
+                toReturn = True
+            client_sock.send("{}\n".format(toResponse).encode('utf-8'))
+        return toReturn
+
+    @classmethod
+    def _parse_winners(cls, winners: list[Bet]):
+        return Protocol.WINNERS_DELIMITER.join(map(lambda bet: bet.document, winners))

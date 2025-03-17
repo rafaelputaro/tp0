@@ -3,6 +3,7 @@ import logging
 import sys
 import signal
 from common.protocol import Protocol
+from common.lottery import Lottery
 
 SIGNAL_HANDLER_ACTION="received_a_signal"
 CLOSE_SERVER_SOCKET_ACTION="closing_server_socket"
@@ -10,7 +11,9 @@ CLOSE_SOCKET_ACTION="closing_a_client_socket"
 READ_BET_ACTION="read_beat"
 
 class Server:
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, amount_clients):
+         # Creates lottery
+        self.lottery = Lottery(amount_clients)
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
@@ -61,22 +64,28 @@ class Server:
         try:
             # Read agency_id
             (_, _, agency_id) = Protocol.apply_rcv_protocol(client_sock)
-            bets_counter = 0
-            amount_bets_expected = None
-            logging.debug(f'action: read_agency_id | result: success | agency_id: {agency_id}')
-            # Read bet loop
-            while (amount_bets_expected == None):
-                try:
-                    (bets, amount_bets_expected, _) = Protocol.apply_rcv_protocol(client_sock, agency_id)
-                    Protocol.apply_store_bets(bets)
-                    bets_counter += len(bets)
-                except ValueError as e:
-                    logging.info(f'action: {READ_BET_ACTION} | result: fail | cantidad: {e}')
-                except TypeError as e:
-                    logging.debug(f'action: stop_rcv_and_store_bets | result: success | msg: no more bets')
-                    break
-            # Response with amount bets
-            Protocol.apply_res_protocol(client_sock, str(bets_counter), amount_bets_expected)            
+            if not self.lottery.agency_is_waiting(agency_id):
+                bets_counter = 0
+                amount_bets_expected = None
+                logging.debug(f'action: read_agency_id | result: success | agency_id: {agency_id}')
+                # Read bet loop
+                while (amount_bets_expected == None):
+                    try:
+                        (bets, amount_bets_expected, _) = Protocol.apply_rcv_bets_protocol(client_sock, agency_id)
+                        Protocol.apply_store_bets(bets)
+                        bets_counter += len(bets)
+                    except ValueError as e:
+                        logging.info(f'action: {READ_BET_ACTION} | result: fail | cantidad: {e}')
+                    except TypeError as e:
+                        logging.debug(f'action: stop_rcv_and_store_bets | result: success | msg: no more bets')
+                        break
+                # Response with amount bets
+                Protocol.apply_res_amount_bets_protocol(client_sock, str(bets_counter), amount_bets_expected)            
+                # Lottery
+                self.lottery.add_agency(agency_id)    
+            else:
+                # Winners polling 
+                Protocol.apply_winners_protocol(client_sock, agency_id, self.lottery)                     
         except OSError as e:
             logging.error(f'action: receive_message | result: fail | error: {e}')
         except TypeError as e:

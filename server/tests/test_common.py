@@ -1,4 +1,5 @@
 from common.protocol import Protocol
+from common.lottery import Lottery
 from common.utils import *
 import os
 import unittest
@@ -68,17 +69,17 @@ class TestUtils(unittest.TestCase):
         socket_client.connect(('localhost', 12345))
         # Use protocol
         # First message - agency_id
-        (_,_,agency_id) = Protocol.apply_rcv_protocol(socket_client)
+        (_,_,agency_id) = Protocol.apply_rcv_bets_protocol(socket_client)
         self.assertEqual(agency_id, "125")                
         # First bet
-        (bets,_,_) = Protocol.apply_rcv_protocol(socket_client, agency_id)
+        (bets,_,_) = Protocol.apply_rcv_bets_protocol(socket_client, agency_id)
         self.assertEqual(bets[0].first_name, "Santiago Lionel")
         self.assertEqual(bets[0].document, "30904465")
         self.assertEqual(bets[0].birthdate.year, 1999)
         self.assertEqual(bets[0].number, 7574)
         Protocol.apply_store_bet(bets[0])
         # Second bet
-        (bets,_,_) = Protocol.apply_rcv_protocol(socket_client, agency_id)
+        (bets,_,_) = Protocol.apply_rcv_bets_protocol(socket_client, agency_id)
         self.assertEqual(bets[0].agency, 125)
         self.assertEqual(bets[0].first_name, "Pedro Alberto")
         self.assertEqual(bets[0].document, "4090446")
@@ -90,18 +91,30 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(bets[1].first_name, "Lionel Andrés")
         self.assertEqual(bets[1].document, "3019985")
         self.assertEqual(bets[1].birthdate.year, 1985)
-        self.assertEqual(bets[1].number, 2022)
+        self.assertEqual(bets[1].number, 7574)
         Protocol.apply_store_bet(bets[1])
         # Exception on amount fields on message
         try:
-            (_,_,_) = Protocol.apply_rcv_protocol(socket_client, agency_id)
+            (_,_,_) = Protocol.apply_rcv_bets_protocol(socket_client, agency_id)
         except ValueError as e:
             self.assertIsNotNone(e)
         # No more bets
-        (_,amount_bets,_) = Protocol.apply_rcv_protocol(socket_client, agency_id)
+        (_,amount_bets,_) = Protocol.apply_rcv_bets_protocol(socket_client, agency_id)
         self.assertEqual(amount_bets, "3")
         # Response
-        Protocol.apply_res_protocol(socket_client, amount_bets,0)
+        Protocol.apply_res_amount_bets_protocol(socket_client, amount_bets,0)
+        # Get Winners
+        lottery = Lottery(1)
+        # Is waiting?
+        self.assertFalse(lottery.agency_is_waiting(agency_id))
+        # Add agency
+        lottery.add_agency(agency_id)
+        # Is waiting?
+        self.assertTrue(lottery.agency_is_waiting(agency_id))
+        # Amount waiting
+        self.assertEqual(lottery.get_amount_agency_wating(), 1)
+        Protocol.apply_winners_protocol(socket_client, agency_id, lottery)
+        self.assertEqual(len(lottery.get_winners_from_agency(agency_id)), 2)
         # Close socket
         socket_client.close()
         # Assert that the recv method was called
@@ -114,9 +127,10 @@ class MockClientFunc:
     VALUES = [
         '125',
         'Santiago Lionel,Lorca,30904465,1999-03-17,7574',
-        'Pedro Alberto,Pascual,4090446,1970-05-12,9987;Lionel Andrés,Messi,3019985,1985-05-24,2022',
+        'Pedro Alberto,Pascual,4090446,1970-05-12,9987;Lionel Andrés,Messi,3019985,1985-05-24,7574',
         'Clubber,Lang,9519985,1952-05-21,7891,pugilista',
-        'EOF,3'
+        'EOF,3',
+        'WINNERS'
     ]
 
     def __init__(self):
@@ -149,6 +163,3 @@ class MockClientFunc:
 
 if __name__ == '__main__':
     unittest.main()
-
-
-

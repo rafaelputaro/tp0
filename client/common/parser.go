@@ -3,10 +3,14 @@ package common
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 const MAX_LEN = 7000
 const MSG_ERROR = "error: message too long"
+const WINNERS_REQUEST = "WINNERS"
+const KEEP_WAITING_WINNERS_TAG = "KEEP WAITING WINNERS"
+const WINNERS_DELIMITER = ";"
 
 // Get a string ("," delimiter) from a bet
 func doParseBet(bet *Bet) string {
@@ -38,6 +42,11 @@ func ParseAmountBets(amountBets int) (int, string, error) {
 	return checkLen(parsed)
 }
 
+// Get a string to request winners"
+func ParseRequestWinners() (int, string) {
+	return len(WINNERS_REQUEST), WINNERS_REQUEST
+}
+
 // Parse and check length
 func ParseAgencyId(idAgency string) (int, string, error) {
 	parsed := idAgency
@@ -51,4 +60,17 @@ func checkLen(parsed string) (int, string, error) {
 		return parsedLen, parsed, errors.New(MSG_ERROR)
 	}
 	return parsedLen, parsed, nil
+}
+
+// Returns true if the messages contains winners
+func ParseWinnersMessage(msg string) (bool, []string) {
+	if strings.Contains(msg, KEEP_WAITING_WINNERS_TAG) {
+		return false, nil
+	} else {
+		toReturn := []string{}
+		if len(msg) > 0 {
+			toReturn = strings.Split(msg, WINNERS_DELIMITER)
+		}
+		return true, toReturn
+	}
 }

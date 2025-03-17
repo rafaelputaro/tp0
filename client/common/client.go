@@ -1,8 +1,6 @@
 package common
 
 import (
-	//"bufio"
-	//"fmt"
 	"net"
 	"os"
 	"time"
@@ -56,7 +54,7 @@ func (c *Client) createClientSocket() error {
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
-func (c *Client) StartClientLoop(singalChannel chan os.Signal) {
+func (c *Client) StartClientLoop(signalChannel chan os.Signal) {
 	// Create the connection the server
 	c.createClientSocket()
 	// Reads data file
@@ -65,7 +63,7 @@ func (c *Client) StartClientLoop(singalChannel chan os.Signal) {
 	protocol := NewProtocol()
 	// Send first message to server
 	protocol.ApplySendAgencyIdProtocol(c.config.ID, c.conn)
-loop:
+loop_send_bets:
 	// Wait for signal to end client
 	for !loader.IsEof() {
 		bet, errorReadFile := loader.Next()
@@ -73,14 +71,8 @@ loop:
 			protocol.ApplySendBetProtocol(c.config.ID, c.conn, c.config.BatchMaxAmount, bet)
 		}
 		// Receive a signal from channel
-		select {
-		case <-singalChannel:
-			log.Debugf("action: %v | result: success | client_id: %v",
-				SIGNAL_ACTION,
-				c.config.ID,
-			)
-			break loop
-		case <-time.After(c.config.LoopPeriod):
+		if c.receiveSignalOrSleep(signalChannel) {
+			break loop_send_bets
 		}
 	}
 	// Send Remaining
@@ -93,5 +85,39 @@ loop:
 	loader.CloseFile()
 	// Close connection
 	c.conn.Close()
-	log.Debugf("action: loop_finished | result: success | client_id: %v", c.config.ID)
+	log.Debugf("action: loop_send_bets_finished | result: success | client_id: %v", c.config.ID)
+	// Request winners
+	haveWinners := false
+loop_winners:
+	for !haveWinners {
+		// Create the connection the server
+		c.createClientSocket()
+		protocol.ApplySendAgencyIdProtocol(c.config.ID, c.conn)
+		protocol.ApplyRequestWinnersProtocol(c.config.ID, c.conn)
+		_, haveWinners = protocol.ApplyRecvWinnersProtocol(c.config.ID, c.conn)
+		// Close connection
+		c.conn.Close()
+		if !haveWinners {
+			log.Debugf("action: keep_waiting_winners | result: success | client_id: %v", c.config.ID)
+		}
+		// Receive a signal from channel
+		if c.receiveSignalOrSleep(signalChannel) {
+			break loop_winners
+		}
+	}
+}
+
+// Returns true if it receives a signal, otherwise returns false after sleeping
+func (c *Client) receiveSignalOrSleep(signalChannel chan os.Signal) bool {
+	// Receive a signal from channel or sleep
+	select {
+	case <-signalChannel:
+		log.Debugf("action: %v | result: success | client_id: %v",
+			SIGNAL_ACTION,
+			c.config.ID,
+		)
+		return true
+	case <-time.After(c.config.LoopPeriod):
+		return false
+	}
 }

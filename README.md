@@ -178,6 +178,51 @@ make docker-compose-down
 
 ***
 
+### Ejercicio N°7:
+
+Modificar los clientes para que notifiquen al servidor al finalizar con el envío de todas las apuestas y así proceder con el sorteo.
+Inmediatamente después de la notificacion, los clientes consultarán la lista de ganadores del sorteo correspondientes a su agencia.
+Una vez el cliente obtenga los resultados, deberá imprimir por log: `action: consulta_ganadores | result: success | cant_ganadores: ${CANT}`.
+
+El servidor deberá esperar la notificación de las 5 agencias para considerar que se realizó el sorteo e imprimir por log: `action: sorteo | result: success`.
+Luego de este evento, podrá verificar cada apuesta con las funciones `load_bets(...)` y `has_won(...)` y retornar los DNI de los ganadores de la agencia en cuestión. Antes del sorteo no se podrán responder consultas por la lista de ganadores con información parcial.
+
+Las funciones `load_bets(...)` y `has_won(...)` son provistas por la cátedra y no podrán ser modificadas por el alumno.
+
+No es correcto realizar un broadcast de todos los ganadores hacia todas las agencias, se espera que se informen los DNIs ganadores que correspondan a cada una de ellas.
+
+#### Resolución:
+
+Del punto anterior ya arrastro lo siguiente:
+
+* Para enviar la apuesta se utiliza el protocol por ejemplo con dos chunks desde el cliente:
+<cant bytes><id agencia>
+chunk 1: <cant bytes><apuesta 1 como string utf8>;......<apuesta m como string utf8>
+chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string utf8>
+<cant bytes><EOF,numero total de apuestas enviadas>
+
+* Para confirmar las apuestas se utiliza el siguiente protocolo desde el servidor:
+<cantidad de apuestas como string>
+
+* El cliente para consultar sobre los ganadores envía el siguiente mensaje:
+<cant bytes><WINNERS>
+
+* El servidor responde de la siguiente manera (suponiendo que los dni's de todos los ganadores entran en un sólo mensaje):
+
+<dni winner 1>;<dni winner 2>;.....<dni winner n>
+
+* En caso de no poder responder porque aún faltan clientes por terminar envía el siguiente mensaje:
+
+<KEEP WAITING WINNERS>
+
+* En el servidor hay una instancia de una clase de Lottery que almacena las agencias que esperan por
+el resultado del sorteo, de esta manera al desconectar y conectar los clientes se sabe como continuar
+ante la espera de mensajes desde el cliente.
+
+* Modifique el generador de docker-compose para que le pase al servidor la cantidad de clientes.
+
+***
+
 #### Test:
 
 ```
