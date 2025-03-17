@@ -11,7 +11,8 @@ import (
 
 const ACTION_SEND_BET = "apuesta_enviada"
 const ACTION_RCV_AMOUNT_BETS = "recibir_cantidad_apuestas"
-const ACTION_MAX_BATCH_AMOUNT_REACHED = "Maximum batch length reached"
+
+// const ACTION_MAX_BATCH_AMOUNT_REACHED = "Maximum batch length reached"
 const ERROR_SEND_BET = "error al enviar apuesta"
 const ERROR_RCV_AMOUNT_BETS = "error al recibir cantidad de apuestas"
 
@@ -51,11 +52,12 @@ func (protocol *Protocol) ApplySendBetProtocol(clientId string, conn net.Conn, b
 			protocol.appendBet(parsed, parsedLenProtUpdated)
 			return nil
 		} else {
-			log.Debugf("action: %v | amount_bets_batch: %v | amount_bets_sended: %v",
-				ACTION_MAX_BATCH_AMOUNT_REACHED,
-				protocol.amountBetsBatch,
-				protocol.amountBetsSended,
-			)
+			/*
+				log.Debugf("action: %v | amount_bets_batch: %v | amount_bets_sended: %v",
+					ACTION_MAX_BATCH_AMOUNT_REACHED,
+					protocol.amountBetsBatch,
+					protocol.amountBetsSended,
+				)*/
 			err := protocol.trySendBets(clientId, conn)
 			if err == nil {
 				protocol.appendBet(parsed, parsedLen)
