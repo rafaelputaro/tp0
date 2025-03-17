@@ -24,14 +24,6 @@ var log = logging.MustGetLogger("log")
 // an error is returned
 func InitConfig() (*viper.Viper, error) {
 	v := viper.New()
-
-	// Read user configuration
-	v.BindEnv("NOMBRE")
-	v.BindEnv("APELLIDO")
-	v.BindEnv("DOCUMENTO")
-	v.BindEnv("NACIMIENTO")
-	v.BindEnv("NUMERO")
-
 	// Configure viper to read env variables with the CLI_ prefix
 	v.AutomaticEnv()
 	v.SetEnvPrefix("cli")
@@ -46,6 +38,8 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "amount")
 	v.BindEnv("log", "level")
+	v.BindEnv("data")
+	v.BindEnv("batch", "maxAmount")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -90,17 +84,14 @@ func InitLogger(logLevel string) error {
 // PrintConfig Print all the configuration parameters of the program.
 // For debugging purposes only
 func PrintConfig(v *viper.Viper) {
-	log.Infof("action: config | result: success | client_id: %s | server_address: %s | loop_amount: %v | loop_period: %v | log_level: %s | nombre: %s | apellido: %s | documento: %s | nacimiento: %s | numero: %s",
+	log.Infof("action: config | result: success | client_id: %s | server_address: %s | loop_amount: %v | loop_period: %v | log_level: %s | data: %v | batch_max_amount: %v",
 		v.GetString("id"),
 		v.GetString("server.address"),
 		v.GetInt("loop.amount"),
 		v.GetDuration("loop.period"),
 		v.GetString("log.level"),
-		v.GetString("NOMBRE"),
-		v.GetString("APELLIDO"),
-		v.GetString("DOCUMENTO"),
-		v.GetString("NACIMIENTO"),
-		v.GetString("NUMERO"),
+		v.GetString("data"),
+		v.GetString("batch.maxAmount"),
 	)
 }
 
@@ -118,15 +109,12 @@ func main() {
 	PrintConfig(v)
 
 	clientConfig := common.ClientConfig{
-		ServerAddress: v.GetString("server.address"),
-		ID:            v.GetString("id"),
-		LoopAmount:    v.GetInt("loop.amount"),
-		LoopPeriod:    v.GetDuration("loop.period"),
-		Nombre:        v.GetString("NOMBRE"),
-		Apellido:      v.GetString("APELLIDO"),
-		Documento:     v.GetString("DOCUMENTO"),
-		Nacimiento:    v.GetString("NACIMIENTO"),
-		Numero:        v.GetString("NUMERO"),
+		ServerAddress:  v.GetString("server.address"),
+		ID:             v.GetString("id"),
+		LoopAmount:     v.GetInt("loop.amount"),
+		LoopPeriod:     v.GetDuration("loop.period"),
+		DataPath:       v.GetString("data"),
+		BatchMaxAmount: v.GetInt("batch.maxAmount"),
 	}
 
 	// New client

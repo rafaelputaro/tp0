@@ -7,6 +7,7 @@ from common.protocol import Protocol
 SIGNAL_HANDLER_ACTION="received_a_signal"
 CLOSE_SERVER_SOCKET_ACTION="closing_server_socket"
 CLOSE_SOCKET_ACTION="closing_a_client_socket"
+READ_BET_ACTION="read_beat"
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -58,15 +59,32 @@ class Server:
         client socket will also be closed
         """
         try:
-            bet = Protocol.apply_rcv_protocol(client_sock)
-            Protocol.apply_res_protocol(client_sock, bet)
+            # Read agency_id
+            (_, _, agency_id) = Protocol.apply_rcv_protocol(client_sock)
+            bets_counter = 0
+            amount_bets_expected = None
+            logging.debug(f'action: read_agency_id | agency_id: {agency_id}')
+            # Read bet loop
+            while (amount_bets_expected == None):
+                try:
+                    (bets, amount_bets_expected, _) = Protocol.apply_rcv_protocol(client_sock, agency_id)
+                    Protocol.apply_store_bets(bets)
+                    bets_counter += len(bets)
+                except ValueError as e:
+                    logging.info(f'action: {READ_BET_ACTION} | result: fail | cantidad: {e}')
+                except TypeError as e:
+                    logging.debug(f'action: store_bets | msg: no more bets')
+                    break
+            # Response with amount bets
+            Protocol.apply_res_protocol(client_sock, str(bets_counter), amount_bets_expected)            
         except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
+            logging.error(f'action: receive_message | result: fail | error: {e}')
         except TypeError as e:
-            logging.error("action: parse_message | result: fail | error: {e}")
+            logging.error(f'action: parse_message | result: fail | error: {e}')
         finally:
             client_sock.close()
             self._clients_sockets.remove(client_sock)
+
 
     def __accept_new_connection(self):
         """

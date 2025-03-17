@@ -16,15 +16,12 @@ var log = logging.MustGetLogger("log")
 
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
-	ID            string
-	ServerAddress string
-	LoopAmount    int
-	LoopPeriod    time.Duration
-	Nombre        string
-	Apellido      string
-	Documento     string
-	Nacimiento    string
-	Numero        string
+	ID             string
+	ServerAddress  string
+	LoopAmount     int
+	LoopPeriod     time.Duration
+	DataPath       string
+	BatchMaxAmount int
 }
 
 // Client Entity that encapsulates how
@@ -60,31 +57,41 @@ func (c *Client) createClientSocket() error {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop(singalChannel chan os.Signal) {
-	// There is an autoincremental msgID to identify every message sent
-	// Messages if the message amount threshold has not been surpassed
+	// Create the connection the server
+	c.createClientSocket()
+	// Reads data file
+	loader, _ := NewBetsLoader(c.config.DataPath)
+	// Create communication handler
+	protocol := NewProtocol()
+	// Send first message to server
+	protocol.ApplySendAgencyIdProtocol(c.config.ID, c.conn)
 loop:
-	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
-		// Create the connection the server in every loop iteration.
-		c.createClientSocket()
-		// Send bet
-		bet := LoadBet(&c.config)
-		ApplySendBetProtocol(bet, c.config.ID, c.conn)
-		// Close connection
-		c.conn.Close()
-		// Wait for signal to end client
-		for {
-			select {
-			// Receive a signal from channel
-			case <-singalChannel:
-				log.Infof("action: %v | result: success | client_id: %v",
-					SIGNAL_ACTION,
-					c.config.ID,
-				)
-				break loop
-			// Wait a time between sending one message and the next one
-			case <-time.After(c.config.LoopPeriod):
-			}
+	// Wait for signal to end client
+	for !loader.IsEof() {
+		bet, errorReadFile := loader.Next()
+		if errorReadFile == nil {
+			protocol.ApplySendBetProtocol(c.config.ID, c.conn, c.config.BatchMaxAmount, bet)
+		}
+		// Receive a signal from channel
+		select {
+		case <-singalChannel:
+			log.Debugf("action: %v | result: success | client_id: %v",
+				SIGNAL_ACTION,
+				c.config.ID,
+			)
+			break loop
+		case <-time.After(c.config.LoopPeriod):
 		}
 	}
-	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+	// Send Remaining
+	protocol.SendRemainingBets(c.config.ID, c.conn)
+	// Send amount bets
+	protocol.ApplySendAmountBetsProtocol(c.config.ID, c.conn, protocol.amountBetsSended)
+	// Receive how many bets have been accepted by the server
+	protocol.ApplyRecvAmountBetsProtocol(c.config.ID, c.conn, protocol.amountBetsSended)
+	// Close File
+	loader.CloseFile()
+	// Close connection
+	c.conn.Close()
+	log.Debugf("action: loop_finished | result: success | client_id: %v", c.config.ID)
 }

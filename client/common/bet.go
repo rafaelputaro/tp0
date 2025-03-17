@@ -32,16 +32,3 @@ func logActionOverBet(bet *Bet, action string) {
 		bet.Number,
 	)
 }
-
-// Load bet from config
-func LoadBet(config *ClientConfig) *Bet {
-	bet := Bet{
-		Name:     config.Nombre,
-		LastName: config.Apellido,
-		DNI:      config.Documento,
-		Birthday: config.Nacimiento,
-		Number:   config.Numero,
-	}
-	logActionOverBet(&bet, "bet_from_config")
-	return &bet
-}

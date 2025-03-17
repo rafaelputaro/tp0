@@ -15,6 +15,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -mod vendor -o bin/client github.com/7574-
 
 
 FROM busybox:latest
+
+# Copy and unzip data
+COPY ./.data/dataset.zip /dataset.zip
+RUN unzip dataset.zip
+
 COPY --from=builder /build/bin/client /client
 COPY ./client/config.yaml /config.yaml
 ENTRYPOINT ["/bin/sh"]
