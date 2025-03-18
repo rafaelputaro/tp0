@@ -8,8 +8,6 @@ class Protocol(ABC):
 
     ACTION_PARSE_BET = "parse_bet"
 
-    #ACTION_RECEIVE = "apuesta_recibida"
-
     ACTION_RESPONSE = "apuesta_recibida"
 
     ACTION_STORE_BET = "apuesta_almacenada"
@@ -123,6 +121,7 @@ class Protocol(ABC):
             winners: list[Bet] = lottery.get_winners_from_agency(agency)
             toResponse: str = Protocol.KEEP_WAITING_WINNERS_TAG
             if winners != None:
+                logging.info(f'action: sorteo | result: success')
                 toResponse = Protocol._parse_winners(winners)
                 toReturn = True
             client_sock.send("{}\n".format(toResponse).encode('utf-8'))

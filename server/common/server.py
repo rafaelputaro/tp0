@@ -94,7 +94,6 @@ class Server:
             client_sock.close()
             self._clients_sockets.remove(client_sock)
 
-
     def __accept_new_connection(self):
         """
         Accept new connections
