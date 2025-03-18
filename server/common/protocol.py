@@ -8,9 +8,9 @@ class Protocol(ABC):
 
     ACTION_PARSE_BET = "parse_bet"
 
-    ACTION_RECEIVE = "apuesta_recibida"
+    #ACTION_RECEIVE = "apuesta_recibida"
 
-    ACTION_RESPONSE = "enviar_número_de_apuestas"
+    ACTION_RESPONSE = "apuesta_recibida"
 
     ACTION_STORE_BET = "apuesta_almacenada"
 
