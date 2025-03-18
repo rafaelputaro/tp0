@@ -232,6 +232,23 @@ make docker-compose-logs
 make docker-compose-down
 ```
 ***
+### Ejercicio N°8:
+
+Modificar el servidor para que permita aceptar conexiones y procesar mensajes en paralelo. En caso de que el alumno implemente el servidor en Python utilizando _multithreading_,  deberán tenerse en cuenta las [limitaciones propias del lenguaje](https://wiki.python.org/moin/GlobalInterpreterLock).
+
+#### Resolución:
+
+En lottery unifique el acceso a la base de datos local de loterías para así operar con un sólo lock
+en el servidor al momento de guardar las apuestas y obtener el ganador. Por otro lado tengo la lista de agencias en espera como dato compartido entre los procesos para cada cliente en el servidor. De esta manera se accede periódicamente con locks a la instancia de Lottery para consultar si todas las agencias están esperando y así responder en el contexto de un polling desde el cliente.
+
+#### Ejecución:
+
+```
+. generar-compose.sh docker-compose-dev.yaml 5
+make docker-compose-up
+make docker-compose-logs
+make docker-compose-down
+```
 
 #### Test:
 

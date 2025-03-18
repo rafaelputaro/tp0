@@ -105,6 +105,9 @@ loop_winners:
 			break loop_winners
 		}
 	}
+	// Close connection
+	c.conn.Close()
+	log.Infof("action: close_connection | result: success | client_id: %v", c.config.ID)
 }
 
 // Returns true if it receives a signal, otherwise returns false after sleeping

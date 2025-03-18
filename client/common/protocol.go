@@ -12,9 +12,7 @@ import (
 const ACTION_SEND_BET = "apuesta_enviada"
 const ACTION_RCV_AMOUNT_BETS = "recibir_cantidad_apuestas"
 const ACTION_ASK_WINNERS = "consulta_ganadores"
-
-// const ACTION_MAX_BATCH_AMOUNT_REACHED = "Maximum batch length reached"
-const ERROR_SEND_BET = "error al enviar apuesta"
+const ERROR_SEND = "error al mensaje al servidor"
 const ERROR_RCV_AMOUNT_BETS = "error al recibir cantidad de apuestas"
 const ERROR_RCV_WINNERS = "error al recibir ganadores"
 
@@ -153,15 +151,15 @@ func checkErrorSend(clientId string, errSendLen error, errSendContent error) err
 	checkErrSendContent := errSendContent != nil
 	if checkErrSendLen || checkErrSendContent {
 		log.Debugf("action: %v | result: fail | client_id: %v | error_send_len: %v | error_send_content: %v",
-			ERROR_SEND_BET,
+			ERROR_SEND,
 			clientId,
 			errSendLen,
 			errSendContent,
 		)
 		log.Errorf("action: %v | result: fail | client_id: %v | error: %v",
-			ERROR_SEND_BET,
+			ERROR_SEND,
 			clientId,
-			ERROR_SEND_BET,
+			ERROR_SEND,
 		)
 		if checkErrSendLen {
 			return errSendLen

@@ -86,17 +86,17 @@ class Protocol(ABC):
         return bets 
 
     @classmethod
-    def apply_store_bet(cls, bet: Bet):
+    def apply_store_bet(cls, lottery: Lottery, bet: Bet):
         """ Support the bet locally
         """        
-        store_bets([bet])
+        lottery.store_bets([bet])
 
     @classmethod
-    def apply_store_bets(cls, bets: list[Bet]):
+    def apply_store_bets(cls, lottery: Lottery, bets: list[Bet]):
         """ Support the bets locally
         """        
         for bet in bets:
-            Protocol.apply_store_bet(bet)
+            Protocol.apply_store_bet(lottery, bet)
 
     @classmethod
     def apply_res_amount_bets_protocol(cls, client_sock: socket, amount_bets: str, amount_bets_expected: str):
@@ -116,6 +116,7 @@ class Protocol(ABC):
         length: int = int.from_bytes(client_sock.recv(Protocol.AMOUNT_BYTES_LENGTH_MESSAGE), byteorder=Protocol.BYTE_ORDER)
         msg: str = client_sock.recv(length).decode(Protocol.CODIFICATION).strip()
         toReturn: bool = False
+        logging.debug(f'Aquí--------------------------')
         if msg.find(Protocol.WINNERS_REQUEST_TAG) >= 0:
             winners: list[Bet] = lottery.get_winners_from_agency(agency)
             toResponse: str = Protocol.KEEP_WAITING_WINNERS_TAG

@@ -1,5 +1,5 @@
 from common.protocol import Protocol
-from common.lottery import Lottery
+from common.lottery import Lottery, KEY_AGENCIES_WAITING
 from common.utils import *
 import os
 import unittest
@@ -68,6 +68,8 @@ class TestUtils(unittest.TestCase):
         socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socket_client.connect(('localhost', 12345))
         # Use protocol
+        agencies_waiting = {KEY_AGENCIES_WAITING: []}
+        lottery = Lottery(agencies_waiting, 1)
         # First message - agency_id
         (_,_,agency_id) = Protocol.apply_rcv_bets_protocol(socket_client)
         self.assertEqual(agency_id, "125")                
@@ -77,7 +79,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(bets[0].document, "30904465")
         self.assertEqual(bets[0].birthdate.year, 1999)
         self.assertEqual(bets[0].number, 7574)
-        Protocol.apply_store_bet(bets[0])
+        Protocol.apply_store_bet(lottery, bets[0])
         # Second bet
         (bets,_,_) = Protocol.apply_rcv_bets_protocol(socket_client, agency_id)
         self.assertEqual(bets[0].agency, 125)
@@ -85,14 +87,14 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(bets[0].document, "4090446")
         self.assertEqual(bets[0].birthdate.year, 1970)
         self.assertEqual(bets[0].number, 9987)
-        Protocol.apply_store_bet(bets[0])
+        Protocol.apply_store_bet(lottery, bets[0])
         # Third bet
         self.assertEqual(bets[1].agency, 125)
         self.assertEqual(bets[1].first_name, "Lionel Andrés")
         self.assertEqual(bets[1].document, "3019985")
         self.assertEqual(bets[1].birthdate.year, 1985)
         self.assertEqual(bets[1].number, 7574)
-        Protocol.apply_store_bet(bets[1])
+        Protocol.apply_store_bet(lottery, bets[1])
         # Exception on amount fields on message
         try:
             (_,_,_) = Protocol.apply_rcv_bets_protocol(socket_client, agency_id)
@@ -104,7 +106,6 @@ class TestUtils(unittest.TestCase):
         # Response
         Protocol.apply_res_amount_bets_protocol(socket_client, amount_bets,0)
         # Get Winners
-        lottery = Lottery(1)
         # Is waiting?
         self.assertFalse(lottery.agency_is_waiting(agency_id))
         # Add agency
