@@ -90,7 +90,6 @@ class Protocol(ABC):
         """ Support the bet locally
         """        
         store_bets([bet])
-        #logging.debug(f'action: {Protocol.ACTION_STORE_BET} | result: success | dni: {bet.document} | numero: {bet.number}')
 
     @classmethod
     def apply_store_bets(cls, bets: list[Bet]):
