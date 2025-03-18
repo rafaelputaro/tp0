@@ -219,7 +219,7 @@ chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string
 el resultado del sorteo, de esta manera al desconectar y conectar los clientes se sabe como continuar
 ante la espera de mensajes desde el cliente.
 
-* Modifique el generador de docker-compose para que le pase al servidor la cantidad de clientes.
+* Modifique el generador de docker-compose para que le pase al servidor la cantidad de clientes por medio de una variable de entorno.
 
 ***
 
