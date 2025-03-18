@@ -223,6 +223,16 @@ ante la espera de mensajes desde el cliente.
 
 ***
 
+#### Ejecución:
+
+```
+. generar-compose.sh docker-compose-dev.yaml 5
+make docker-compose-up
+make docker-compose-logs
+make docker-compose-down
+```
+***
+
 #### Test:
 
 ```

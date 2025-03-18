@@ -63,7 +63,7 @@ class Server:
         """
         try:
             # Read agency_id
-            (_, _, agency_id) = Protocol.apply_rcv_protocol(client_sock)
+            (_, _, agency_id) = Protocol.apply_rcv_bets_protocol(client_sock)
             if not self.lottery.agency_is_waiting(agency_id):
                 bets_counter = 0
                 amount_bets_expected = None

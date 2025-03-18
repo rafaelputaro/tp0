@@ -22,5 +22,5 @@ FROM busybox:latest
 
 COPY --from=builder /build/bin/client /client
 COPY ./client/config.yaml /config.yaml
-RUN ls
+
 ENTRYPOINT ["/bin/sh"]
