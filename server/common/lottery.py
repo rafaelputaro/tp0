@@ -16,7 +16,7 @@ class Lottery:
         """
         if not self.agency_is_waiting(agency_id):
             self._shared_data[KEY_AGENCIES_WAITING] = self._shared_data[KEY_AGENCIES_WAITING] + [agency_id]
-            logging.debug(f'action: add_agency_waiting | amount_waiting: {self.get_amount_agency_wating()} | agency_id: {agency_id}')
+            logging.debug(f'action: add_agency_waiting | result: success | msg: Agency ID is {agency_id} and {self.get_amount_agency_wating()} agencies are waiting.')
 
     def agency_is_waiting(self, agency_id: str):
         """ Returns if agency is waiting
