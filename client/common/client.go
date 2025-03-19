@@ -83,20 +83,13 @@ loop_send_bets:
 	protocol.ApplyRecvAmountBetsProtocol(c.config.ID, c.conn, protocol.amountBetsSended)
 	// Close File
 	loader.CloseFile()
-	// Close connection
-	c.conn.Close()
 	log.Debugf("action: loop_send_bets_finished | result: success | client_id: %v", c.config.ID)
 	// Request winners
 	haveWinners := false
 loop_winners:
 	for !haveWinners {
-		// Create the connection the server
-		c.createClientSocket()
-		protocol.ApplySendAgencyIdProtocol(c.config.ID, c.conn)
 		protocol.ApplyRequestWinnersProtocol(c.config.ID, c.conn)
 		_, haveWinners = protocol.ApplyRecvWinnersProtocol(c.config.ID, c.conn)
-		// Close connection
-		c.conn.Close()
 		if !haveWinners {
 			log.Debugf("action: keep_waiting_winners | result: success | client_id: %v", c.config.ID)
 		}
