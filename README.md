@@ -155,14 +155,16 @@ Por su parte, el servidor deberá responder con éxito solamente si todas las ap
 #### Resolución:
 
 * Para enviar la apuesta se utiliza el siguiente protocol ejemplificado a continuación con dos chunks desde el cliente:
+```
 <cant bytes><id agencia>
 chunk 1: <cant bytes><apuesta 1 como string utf8>;......<apuesta m como string utf8>
 chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string utf8>
 <cant bytes><EOF,numero total de apuestas enviadas>
-
-* Para confirmar las apuestas se utiliza el protocolo desde el servidor:
+```
+* Para confirmar las apuestas se utiliza el siguiente protocolo desde el servidor:
+```
 <cantidad de apuestas como string>
-
+```
 * Por otro lado se modifica mi-generador.py para que pase el path del archivo para cada cliente el cuál se toma de la descompresión .data/dataset.zip del cuá se generan los volumenes correspondientes de cada archivo correspondiente al contenedor de cada cliente.
 
 * Además se coloca en el main del cliente el código ncesario para levantar del config.yaml el número máximo de apuestas de cada lote.
@@ -195,26 +197,29 @@ No es correcto realizar un broadcast de todos los ganadores hacia todas las agen
 
 Del punto anterior ya arrastro lo siguiente:
 
-* Para enviar la apuesta se utiliza el protocol por ejemplo con dos chunks desde el cliente:
+* Para enviar la apuesta se utiliza el siguiente protocolo por ejemplo con dos chunks desde el cliente:
+```
 <cant bytes><id agencia>
 chunk 1: <cant bytes><apuesta 1 como string utf8>;......<apuesta m como string utf8>
 chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string utf8>
 <cant bytes><EOF,numero total de apuestas enviadas>
-
+```
 * Para confirmar las apuestas se utiliza el siguiente protocolo desde el servidor:
+```
 <cantidad de apuestas como string>
-
+```
 * El cliente para consultar sobre los ganadores envía el siguiente mensaje:
+```
 <cant bytes><WINNERS>
-
+```
 * El servidor responde de la siguiente manera (suponiendo que los dni's de todos los ganadores entran en un sólo mensaje):
-
+```
 <dni winner 1>;<dni winner 2>;.....<dni winner n>
-
+```
 * En caso de no poder responder porque aún faltan clientes por terminar envía el siguiente mensaje:
-
+```
 <KEEP WAITING WINNERS>
-
+```
 * En el servidor hay una instancia de una clase de Lottery que almacena las agencias que esperan por
 el resultado del sorteo, de esta manera al desconectar y conectar los clientes se sabe como continuar
 ante la espera de mensajes desde el cliente.
