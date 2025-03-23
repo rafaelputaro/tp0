@@ -155,17 +155,19 @@ Por su parte, el servidor deberá responder con éxito solamente si todas las ap
 #### Resolución:
 
 * Para enviar la apuesta se utiliza el siguiente protocol ejemplificado a continuación con dos chunks desde el cliente:
+```
 <cant bytes><id agencia>
 chunk 1: <cant bytes><apuesta 1 como string utf8>;......<apuesta m como string utf8>
 chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string utf8>
 <cant bytes><EOF,numero total de apuestas enviadas>
-
+```
 * Para confirmar las apuestas se utiliza el protocolo desde el servidor:
+```
 <cantidad de apuestas como string>
-
+```
 * Por otro lado se modifica mi-generador.py para que pase el path del archivo para cada cliente el cuál se toma de la descompresión .data/dataset.zip del cuá se generan los volumenes correspondientes de cada archivo correspondiente al contenedor de cada cliente.
 
-* Además se coloca en el main del cliente el código ncesario para levantar del config.yaml el número máximo de apuestas de cada lote.
+* Además se coloca en el main del cliente el código necesario para levantar del config.yaml el número máximo de apuestas de cada lote.
 
 #### Ejecución:
 
