@@ -125,7 +125,7 @@ Se deberá implementar un módulo de comunicación entre el cliente y el servido
 ```
 * Para confirmar la apuesta se utiliza el siguiente formato de mensaje:
 ```
-<cant bytes><número de la apuesta como string utf8>
+<número de la apuesta como string utf8>
 ```
 * Se tienen módulos que modelan la apuesta, aplican el parseo y realizan la comunicación tanto en el cliente (bet, parser y protocol) como en el servidor (utils/Bet y protocol/Protocol).
 
