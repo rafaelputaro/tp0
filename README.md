@@ -20,7 +20,7 @@ python3 mi-generador.py $1 $2
 ```
 #### Resolución:
 
-Se creo un script llamado "generar-compose-sh" el cual llama a un script en python llamado "mi-generador.py" que genera efectivamente el docker-compose con la cantidad de clientes solicitada.
+Se creo un script llamado "generar-compose-sh" el cual llama a un script en python llamado "mi-generador.py" que genera efectivamente el docker-compose file con la cantidad de clientes solicitada.
 
 #### Ejecución:
 ```
@@ -91,7 +91,6 @@ make docker-compose-up
 make docker-compose-logs
 make docker-compose-down
 ```
-NOTA: Para verificar que el cierre del cliente funciona correctamente subir el loop.amount en el archivo de configuración del mismo retornando un "code 0" en el log.
 
 ***
 
@@ -120,10 +119,14 @@ Se deberá implementar un módulo de comunicación entre el cliente y el servido
 
 #### Resolución:
 
-* Para enviar la apuesta se utiliza el protocol <cant bytes><id agencia + apuesta (con datos apostador) como string utf8 separados por comas>
-
-* Para confirmar la apuesta se utiliza el protocol <cant bytes><número de la apuesta como string utf8>
-
+* Para enviar la apuesta se utiliza el siguiente protocolo:
+```
+<cant bytes><id agencia + apuesta (con datos apostador) como string utf8 separados por comas>
+```
+* Para confirmar la apuesta se utiliza el protocol 
+```
+<cant bytes><número de la apuesta como string utf8>
+```
 * Se tienen módulos que modelan la apuesta, aplican el parseo y realizan la comunicación tanto en el cliente (bet, parser y protocol) como en el servidor (utils/Bet y protocol/Protocol).
 
 * Se modifico el script de generación del docker-compose para generar las variables entorno de la apuesta de cada cliente.
@@ -258,6 +261,6 @@ make docker-compose-down
 #### Test:
 
 ```
-REPO_PATH=/home/putaro/Workspace/tp0 pytest -s
+REPO_PATH=/home/<usuario>/Workspace/tp0 make test-logs
 ```
 ***
