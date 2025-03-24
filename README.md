@@ -91,7 +91,6 @@ make docker-compose-up
 make docker-compose-logs
 make docker-compose-down
 ```
-NOTA: Para verificar que el cierre del cliente funciona correctamente subir el loop.amount en el archivo de configuración del mismo retornando un "code 0" en el log.
 
 ***
 
@@ -120,10 +119,14 @@ Se deberá implementar un módulo de comunicación entre el cliente y el servido
 
 #### Resolución:
 
-* Para enviar la apuesta se utiliza el protocol <cant bytes><id agencia + apuesta (con datos apostador) como string utf8 separados por comas>
-
-* Para confirmar la apuesta se utiliza el protocol <cant bytes><número de la apuesta como string utf8>
-
+* Para enviar la apuesta se utiliza el siguiente formato de mensaje:
+```
+<cant bytes><id agencia + apuesta (con datos apostador) como string utf8 separados por comas>
+```
+* Para confirmar la apuesta se utiliza el siguiente formato de mensaje:
+```
+<cant bytes><número de la apuesta como string utf8>
+```
 * Se tienen módulos que modelan la apuesta, aplican el parseo y realizan la comunicación tanto en el cliente (bet, parser y protocol) como en el servidor (utils/Bet y protocol/Protocol).
 
 * Se modifico el script de generación del docker-compose para generar las variables entorno de la apuesta de cada cliente.
@@ -154,14 +157,14 @@ Por su parte, el servidor deberá responder con éxito solamente si todas las ap
 
 #### Resolución:
 
-* Para enviar la apuesta se utiliza el siguiente protocol ejemplificado a continuación con dos chunks desde el cliente:
+* Para enviar la apuesta se utiliza el siguiente formato de mensaje ejemplificado a continuación con dos chunks desde el cliente:
 ```
 <cant bytes><id agencia>
 chunk 1: <cant bytes><apuesta 1 como string utf8>;......<apuesta m como string utf8>
 chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string utf8>
 <cant bytes><EOF,numero total de apuestas enviadas>
 ```
-* Para confirmar las apuestas se utiliza el siguiente protocolo desde el servidor:
+* Para confirmar las apuestas se utiliza el siguiente formato de mensaje desde el servidor:
 ```
 <cantidad de apuestas como string>
 ```
@@ -197,14 +200,14 @@ No es correcto realizar un broadcast de todos los ganadores hacia todas las agen
 
 Del punto anterior ya arrastro lo siguiente:
 
-* Para enviar la apuesta se utiliza el siguiente protocolo por ejemplo con dos chunks desde el cliente:
+* Para enviar la apuesta se utiliza el siguiente formato de mensaje por ejemplo con dos chunks desde el cliente:
 ```
 <cant bytes><id agencia>
 chunk 1: <cant bytes><apuesta 1 como string utf8>;......<apuesta m como string utf8>
 chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string utf8>
 <cant bytes><EOF,numero total de apuestas enviadas>
 ```
-* Para confirmar las apuestas se utiliza el siguiente protocolo desde el servidor:
+* Para confirmar las apuestas se utiliza el siguiente formato de mensaje desde el servidor:
 ```
 <cantidad de apuestas como string>
 ```
@@ -241,6 +244,6 @@ make docker-compose-down
 #### Test:
 
 ```
-REPO_PATH=/home/putaro/Workspace/tp0 pytest -s
+REPO_PATH=/home/<usuario>/Workspace/tp0 pytest -s
 ```
 ***
