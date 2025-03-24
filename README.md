@@ -120,10 +120,14 @@ Se deberá implementar un módulo de comunicación entre el cliente y el servido
 
 #### Resolución:
 
-* Para enviar la apuesta se utiliza el protocol <cant bytes><id agencia + apuesta (con datos apostador) como string utf8 separados por comas>
-
-* Para confirmar la apuesta se utiliza el protocol <cant bytes><número de la apuesta como string utf8>
-
+* Para enviar la apuesta se utiliza el siguiente formato de mensaje:
+```
+<cant bytes><id agencia + apuesta (con datos apostador) como string utf8 separados por comas>
+```
+* Para confirmar la apuesta se utiliza el siguiente formato de mensaje:
+```
+<cant bytes><número de la apuesta como string utf8>
+```
 * Se tienen módulos que modelan la apuesta, aplican el parseo y realizan la comunicación tanto en el cliente (bet, parser y protocol) como en el servidor (utils/Bet y protocol/Protocol).
 
 * Se modifico el script de generación del docker-compose para generar las variables entorno de la apuesta de cada cliente.
@@ -142,6 +146,6 @@ NOTA: El script generar-compose permite exceder los 5 clientes generando cliente
 #### Test:
 
 ```
-REPO_PATH=/home/putaro/Workspace/tp0 pytest -s
+REPO_PATH=/home/<usuario>/Workspace/tp0 pytest -s
 ```
 ***
