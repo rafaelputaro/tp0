@@ -47,8 +47,13 @@ Modifique "mi-generador.py" con el objetivo de que cree volumes para cada tipo d
 make docker-compose-up
 docker ps
 make docker-compose-logs
+docker exec -ti server sh
+ls
+cat config.ini
 make docker-compose-down
+exit
 ```
+
 
 ***
 
