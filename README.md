@@ -119,11 +119,11 @@ Se deberá implementar un módulo de comunicación entre el cliente y el servido
 
 #### Resolución:
 
-* Para enviar la apuesta se utiliza el siguiente protocolo:
+* Para enviar la apuesta se utiliza el siguiente formato de mensaje:
 ```
 <cant bytes><id agencia + apuesta (con datos apostador) como string utf8 separados por comas>
 ```
-* Para confirmar la apuesta se utiliza el protocol 
+* Para confirmar la apuesta se utiliza el siguiente formato de mensaje 
 ```
 <cant bytes><número de la apuesta como string utf8>
 ```
@@ -157,14 +157,14 @@ Por su parte, el servidor deberá responder con éxito solamente si todas las ap
 
 #### Resolución:
 
-* Para enviar la apuesta se utiliza el siguiente protocol ejemplificado a continuación con dos chunks desde el cliente:
+* Para enviar la apuesta se utiliza el siguiente formato de mensaje ejemplificado a continuación con dos chunks desde el cliente:
 ```
 <cant bytes><id agencia>
 chunk 1: <cant bytes><apuesta 1 como string utf8>;......<apuesta m como string utf8>
 chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string utf8>
 <cant bytes><EOF,numero total de apuestas enviadas>
 ```
-* Para confirmar las apuestas se utiliza el protocolo desde el servidor:
+* Para confirmar las apuestas se utiliza el formato de mensaje desde el servidor:
 ```
 <cantidad de apuestas como string>
 ```
@@ -200,14 +200,14 @@ No es correcto realizar un broadcast de todos los ganadores hacia todas las agen
 
 Del punto anterior ya arrastro lo siguiente:
 
-* Para enviar la apuesta se utiliza el protocol por ejemplo con dos chunks desde el cliente:
+* Para enviar la apuesta se utiliza el siguiente formato de mensaje por ejemplo con dos chunks desde el cliente:
 ```
 <cant bytes><id agencia>
 chunk 1: <cant bytes><apuesta 1 como string utf8>;......<apuesta m como string utf8>
 chunk 2: <cant bytes><apuesta m+1 como string utf8>;......<apuesta n como string utf8>
 <cant bytes><EOF,numero total de apuestas enviadas>
 ```
-* Para confirmar las apuestas se utiliza el siguiente protocolo desde el servidor:
+* Para confirmar las apuestas se utiliza el siguiente formato de mensaje desde el servidor:
 ```
 <cantidad de apuestas como string>
 ```
