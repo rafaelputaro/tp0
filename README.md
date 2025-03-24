@@ -98,6 +98,6 @@ NOTA: Para verificar que el cierre del cliente funciona correctamente subir el l
 #### Test:
 
 ```
-REPO_PATH=/home/putaro/Workspace/tp0 pytest -s
+REPO_PATH=/home/<usuario>/Workspace/tp0 pytest -s
 ```
 ***
