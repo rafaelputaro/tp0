@@ -3,10 +3,12 @@ package common
 import (
 	"bufio"
 	"encoding/binary"
+	"errors"
 	"io"
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const ACTION_SEND_BET = "apuesta_enviada"
@@ -17,6 +19,8 @@ const ACTION_ASK_WINNERS = "consulta_ganadores"
 const ERROR_SEND_BET = "error al enviar apuesta"
 const ERROR_RCV_AMOUNT_BETS = "error al recibir cantidad de apuestas"
 const ERROR_RCV_WINNERS = "error al recibir ganadores"
+const MAX_RETRY = 100
+const TIME_RETRY = 100 //ms
 
 // Bet Entity that encapsulates how
 type Protocol struct {
@@ -66,9 +70,17 @@ func (protocol *Protocol) ApplySendBetProtocol(clientId string, conn net.Conn, b
 func (protocol *Protocol) trySendBets(clientId string, conn net.Conn) error {
 	parsed := strings.Join(protocol.betsParsed, "")
 	parsedLen := protocol.parsedLen
-	errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
-	_, errorSendContent := io.WriteString(conn, parsed)
-	checkError := checkErrorSend(clientId, errorSendLen, errorSendContent)
+	var checkError error = nil
+	// if error on send retry
+	for attemp := 0; attemp < MAX_RETRY; attemp++ {
+		errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
+		lenWrited, errorSendContent := io.WriteString(conn, parsed)
+		checkError = checkErrorSend(clientId, errorSendLen, errorSendContent, checkErrorShortWrite(parsedLen, lenWrited))
+		if checkError == nil {
+			break
+		}
+		time.Sleep(TIME_RETRY * time.Millisecond)
+	}
 	if checkError == nil {
 		// clean buffer and update amount bets sended
 		protocol.amountBetsSended += len(protocol.betsParsed)
@@ -105,9 +117,18 @@ func (protocol *Protocol) ApplySendAgencyIdProtocol(clientId string, conn net.Co
 		)
 		return errorOnParse
 	} else {
-		errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
-		_, errorSendContent := io.WriteString(conn, parsed)
-		return checkErrorSend(clientId, errorSendLen, errorSendContent)
+		var checkError error = nil
+		// if error on send retry
+		for attemp := 0; attemp < MAX_RETRY; attemp++ {
+			errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
+			lenWrited, errorSendContent := io.WriteString(conn, parsed)
+			checkError = checkErrorSend(clientId, errorSendLen, errorSendContent, checkErrorShortWrite(parsedLen, lenWrited))
+			if checkError == nil {
+				break
+			}
+			time.Sleep(TIME_RETRY * time.Millisecond)
+		}
+		return checkError
 	}
 }
 
@@ -121,9 +142,18 @@ func (protocol *Protocol) ApplySendAmountBetsProtocol(clientId string, conn net.
 		)
 		return errorOnParse
 	} else {
-		errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
-		_, errorSendContent := io.WriteString(conn, parsed)
-		return checkErrorSend(clientId, errorSendLen, errorSendContent)
+		var checkError error = nil
+		// if error on send retry
+		for attemp := 0; attemp < MAX_RETRY; attemp++ {
+			errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
+			lenWrited, errorSendContent := io.WriteString(conn, parsed)
+			checkError = checkErrorSend(clientId, errorSendLen, errorSendContent, checkErrorShortWrite(parsedLen, lenWrited))
+			if checkError == nil {
+				break
+			}
+			time.Sleep(TIME_RETRY * time.Millisecond)
+		}
+		return checkError
 	}
 }
 
@@ -136,9 +166,18 @@ func (protocol *Protocol) ApplyRecvAmountBetsProtocol(clientId string, conn net.
 // Send amount bets to server and wait for ack
 func (protocol *Protocol) ApplyRequestWinnersProtocol(clientId string, conn net.Conn) error {
 	parsedLen, parsed := ParseRequestWinners()
-	errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
-	_, errorSendContent := io.WriteString(conn, parsed)
-	return checkErrorSend(clientId, errorSendLen, errorSendContent)
+	var checkError error = nil
+	// if error on send retry
+	for attemp := 0; attemp < MAX_RETRY; attemp++ {
+		errorSendLen := binary.Write(conn, binary.BigEndian, uint16(parsedLen))
+		lenWrited, errorSendContent := io.WriteString(conn, parsed)
+		checkError = checkErrorSend(clientId, errorSendLen, errorSendContent, checkErrorShortWrite(parsedLen, lenWrited))
+		if checkError == nil {
+			break
+		}
+		time.Sleep(TIME_RETRY * time.Millisecond)
+	}
+	return checkError
 }
 
 // Receive winners from server. Returns if receive winners
@@ -147,10 +186,20 @@ func (protocol *Protocol) ApplyRecvWinnersProtocol(clientId string, conn net.Con
 	return checkRcvWinners(clientId, strings.TrimSuffix(readed, "\n"), errorRcv)
 }
 
+// Returns error if short write
+func checkErrorShortWrite(lenExpected int, lenWrited int) error {
+	if lenExpected != lenWrited {
+		return errors.New("error short write")
+	} else {
+		return nil
+	}
+}
+
 // Returns false if an error occurs (log errors), true otherwise
-func checkErrorSend(clientId string, errSendLen error, errSendContent error) error {
+func checkErrorSend(clientId string, errSendLen error, errSendContent error, errShortWrite error) error {
 	checkErrSendLen := errSendLen != nil
 	checkErrSendContent := errSendContent != nil
+	checkErrShortWrite := errShortWrite != nil
 	if checkErrSendLen || checkErrSendContent {
 		log.Debugf("action: %v | result: fail | client_id: %v | error_send_len: %v | error_send_content: %v",
 			ERROR_SEND_BET,
@@ -166,7 +215,11 @@ func checkErrorSend(clientId string, errSendLen error, errSendContent error) err
 		if checkErrSendLen {
 			return errSendLen
 		} else {
-			return errSendContent
+			if checkErrShortWrite {
+				return errShortWrite
+			} else {
+				return errSendContent
+			}
 		}
 	}
 	return nil

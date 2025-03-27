@@ -8,6 +8,7 @@ from common.lottery import Lottery
 SIGNAL_HANDLER_ACTION="received_a_signal"
 CLOSE_SERVER_SOCKET_ACTION="closing_server_socket"
 CLOSE_SOCKET_ACTION="closing_a_client_socket"
+MAX_ATTEMPS=100
 READ_BET_ACTION="read_beat"
 
 class Server:
@@ -63,7 +64,19 @@ class Server:
         """
         try:
             # Read agency_id
-            (_, _, agency_id) = Protocol.apply_rcv_bets_protocol(client_sock)
+            agency_id = None
+            attemps = 0
+            # Retry in short read
+            while (agency_id == None):            
+                try:
+                    (_, _, agency_id) = Protocol.apply_rcv_bets_protocol(client_sock)
+                except ValueError as e:
+                    logging.info(f'action: read_agency_id | result: fail | error: {e}')
+                    if (attemps < MAX_ATTEMPS):
+                        time.sleep(SLEEP_RETRY)
+                        attemps += 1
+                    else:
+                        raise e
             if not self.lottery.agency_is_waiting(agency_id):
                 bets_counter = 0
                 amount_bets_expected = None
@@ -75,7 +88,7 @@ class Server:
                         Protocol.apply_store_bets(bets)
                         bets_counter += len(bets)
                     except ValueError as e:
-                        logging.info(f'action: {READ_BET_ACTION} | result: fail | cantidad: {e}')
+                        logging.info(f'action: {READ_BET_ACTION} | result: fail | error: {e}')
                     except TypeError as e:
                         logging.debug(f'action: stop_rcv_and_store_bets | result: success | msg: no more bets')
                         break
