@@ -26,6 +26,8 @@ class Protocol(ABC):
 
     MSG_ERROR_ON_PARSE_BET = "Error on parse bet"
 
+    MSG_SHORT_READ = "Error short read"
+
     WINNERS_DELIMITER = ';'    
 
     WINNERS_REQUEST_TAG = "WINNERS"    
@@ -38,15 +40,31 @@ class Protocol(ABC):
             2) None, None, id_agency -> First message with agency id
             3) None, amount_bets, None -> End of message
             4) Exception on parse or amount fields on message
+            5) Exception in case of short read
         """
         length = int.from_bytes(client_sock.recv(Protocol.AMOUNT_BYTES_LENGTH_MESSAGE), byteorder=Protocol.BYTE_ORDER)
-        msg = client_sock.recv(length).decode(Protocol.CODIFICATION).strip()
+        rcv = client_sock.recv(length)
+        # Checks short read
+        Protocol.check_len_rcv(length, rcv)
+        # Process message
+        msg = rcv.decode(Protocol.CODIFICATION).strip()                
         splittedInBets = list(map(str, msg.split(Protocol.BETS_DELIMITER)))
         lengthSpInBets = len(splittedInBets)
         if lengthSpInBets == 1:
             return Protocol.parse_possible_not_bet(splittedInBets[0], agency)        
         else:
             return Protocol.parse_possibles_bets(splittedInBets, agency), None, None
+
+    def check_len_rcv(lenExpect: int, rcv):
+        """ On short read raise a ValueError
+        """
+        if (Protocol.do_check_len_rcv(lenExpect, rcv)):
+            raise ValueError(f'{Protocol.MSG_SHORT_READ}')
+
+    def do_check_len_rcv(lenExpect: int, rcv) -> bool:
+        """ On short read returns true
+        """
+        return lenExpect != len(rcv)            
 
     @classmethod
     def parse_possible_not_bet(cls, toEvaluate: str, agency = ""):
@@ -114,7 +132,12 @@ class Protocol(ABC):
             the cliente.
         """        
         length: int = int.from_bytes(client_sock.recv(Protocol.AMOUNT_BYTES_LENGTH_MESSAGE), byteorder=Protocol.BYTE_ORDER)
-        msg: str = client_sock.recv(length).decode(Protocol.CODIFICATION).strip()
+        rcv =  client_sock.recv(length)
+        msg: str = rcv.decode(Protocol.CODIFICATION).strip()
+        # Checks short read
+        if Protocol.do_check_len_rcv(length, rcv):
+            return False
+        # Process message
         toReturn: bool = False
         if msg.find(Protocol.WINNERS_REQUEST_TAG) >= 0:
             winners: list[Bet] = lottery.get_winners_from_agency(agency)
